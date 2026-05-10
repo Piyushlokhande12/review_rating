@@ -9,7 +9,7 @@ const companySchema = new mongoose.Schema(
     },
     logo: {
       type: String,
-      default: ""
+      default: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQv43OscITPe8BmNzAp3GPZTt6sVNBrymCEMQ&s"
     },
     logoColor: {
       type: String,

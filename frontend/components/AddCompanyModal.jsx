@@ -89,10 +89,7 @@ export default function AddCompanyModal({ onClose, onAdded }) {
               <input className="form-control" name="city" value={form.city} onChange={handleChange} placeholder="Enter city" />
             </div>
 
-            <div className="form-group">
-              <label>Company Logo</label>
-              <input type="file" onChange={handleLogoChange} style={{ fontSize: 12, flex: 1 }} />
-            </div>
+            
 
             <button className="btn-primary" type="submit"
               style={{ width: '100%', padding: '12px', marginTop: 8, borderRadius: 8 }}>
