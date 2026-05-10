@@ -1,179 +1,105 @@
 import React, { useState } from 'react';
 import { createCompany } from '../utils/api';
 
-const COLORS = [
-  '#1a1a2e', '#3b82f6', '#10b981', '#f59e0b',
-  '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'
-];
-
 export default function AddCompanyModal({ onClose, onAdded }) {
-  const [form, setForm] = useState({
-    name: '', address: '', city: '', foundedOn: '', logoColor: '#1a1a2e'
-  });
-  const [logoFile, setLogoFile] = useState(null);
-  const [logoPreview, setLogoPreview] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({ name: '', address: '', city: '', foundedOn: '' });
+  const [logo, setLogo] = useState({ file: null, preview: '' });
   const [error, setError] = useState('');
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleLogoChange = (e) => {
     const file = e.target.files[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      setError('Logo image must be under 2MB.');
-      return;
-    }
-    setLogoFile(file);
-    setLogoPreview(URL.createObjectURL(file));
-    setError('');
+    if (file) setLogo({ file, preview: URL.createObjectURL(file) });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name || !form.address || !form.city || !form.foundedOn) {
-      setError('All fields are required.');
-      return;
-    }
-    setLoading(true);
-    setError('');
+    if (!form.name || !form.address || !form.city || !form.foundedOn)
+      return setError('All fields are required.');
+
     try {
       const formData = new FormData();
-      formData.append('name', form.name);
-      formData.append('address', form.address);
-      formData.append('city', form.city);
-      formData.append('foundedOn', form.foundedOn);
-      formData.append('logoColor', form.logoColor);
-      if (logoFile) formData.append('logo', logoFile);
+      Object.entries(form).forEach(([k, v]) => formData.append(k, v));
+      formData.append('logoColor', '#1a1a2e');
+      if (logo.file) formData.append('logo', logo.file);
 
       const res = await createCompany(formData);
       onAdded(res.data?.data || res.data);
       onClose();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to add company.');
-    } finally {
-      setLoading(false);
     }
   };
 
-  const previewInitials = form.name
-    ? form.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase()
-    : '?';
+  const initials = form.name.charAt(0);
 
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal">
-        <button className="modal-close" onClick={onClose}>✕</button>
-        <h2>Add Company</h2>
+      <div style={{
+        background: '#fff', borderRadius: 16, width: '100%', maxWidth: 480,
+        position: 'relative', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+      }}>
+        <div style={{ position: 'relative', height: 56 }}>
+           <div style={{
+          position: 'absolute', top: -50, left: -50, width: 150, height: 150,
+          borderRadius: '50%', background: 'linear-gradient(135deg, #D100F3, #002BC5)',
+          opacity: 0.9, pointerEvents: 'none', zIndex: 0,
+        }} />
+        <div style={{
+          position: 'absolute', top: -34, left: 40, width: 80, height: 80,
+          borderRadius: '50%', background: 'linear-gradient(135deg, #002BC5, #D100F3)',
+          opacity: 0.5, pointerEvents: 'none', zIndex: 0,
+        }} />
+          <button onClick={onClose} style={{
+            position: 'absolute', top: 12, right: 16, background: 'none', border: 'none',
+            fontSize: 20, cursor: 'pointer', color: '#666', lineHeight: 1, zIndex: 1,
+          }}>✕</button>
+        </div>
 
-        {error && <div className="alert alert-error">{error}</div>}
+        {/* Form */}
+        <div style={{ padding: '0 28px 24px' }}>
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a2e', marginBottom: 18, textAlign: 'center' }}>
+            Add Company
+          </h2>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Company Name *</label>
-            <input
-              className="form-control"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              placeholder="e.g. Graffersid Web and App Development"
-            />
-          </div>
+          {error && <div className="alert alert-error">{error}</div>}
 
-          <div className="form-group">
-            <label>Address *</label>
-            <input
-              className="form-control"
-              name="address"
-              value={form.address}
-              onChange={handleChange}
-              placeholder="816, Shekhar Central, Manorama Ganj..."
-            />
-          </div>
-
-          <div className="form-row">
+          <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label>City *</label>
-              <input
-                className="form-control"
-                name="city"
-                value={form.city}
-                onChange={handleChange}
-                placeholder="Indore"
-              />
+              <label>Company name</label>
+              <input className="form-control" name="name" value={form.name} onChange={handleChange} placeholder="Enter..." />
             </div>
+
             <div className="form-group">
-              <label>Founded On *</label>
-              <input
-                className="form-control"
-                type="date"
-                name="foundedOn"
-                value={form.foundedOn}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-
-          {/* Logo Upload */}
-          <div className="form-group">
-            <label>Company Logo (optional, max 2MB)</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 6 }}>
-              <div
-                style={{
-                  width: 60, height: 60, borderRadius: 10, flexShrink: 0,
-                  background: logoPreview ? 'transparent' : form.logoColor,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontWeight: 700, fontSize: 18, color: '#fff',
-                  overflow: 'hidden', border: '2px dashed #ddd'
-                }}
-              >
-                {logoPreview
-                  ? <img src={logoPreview} alt="preview"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : previewInitials
-                }
-              </div>
-
-              <div style={{ flex: 1 }}>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
-                  onChange={handleLogoChange}
-                  style={{ fontSize: 13 }}
-                />
-                <p style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>
-                  JPG, PNG, WEBP or GIF — if no image, initials will be used
-                </p>
+              <label>Location</label>
+              <div style={{ position: 'relative' }}>
+                <input className="form-control" name="address" value={form.address} onChange={handleChange}
+                  placeholder="Select Location" style={{ paddingRight: 36 }} />
               </div>
             </div>
-          </div>
 
-          {/* Color picker — only when no image */}
-          {!logoPreview && (
             <div className="form-group">
-              <label>Logo Background Color</label>
-              <div className="color-options">
-                {COLORS.map((c) => (
-                  <div
-                    key={c}
-                    className={`color-dot ${form.logoColor === c ? 'selected' : ''}`}
-                    style={{ background: c }}
-                    onClick={() => setForm({ ...form, logoColor: c })}
-                  />
-                ))}
-              </div>
+              <label>Founded on</label>
+              <input className="form-control" type="date" name="foundedOn" value={form.foundedOn} onChange={handleChange} />
             </div>
-          )}
 
-          <button
-            className="btn-primary"
-            type="submit"
-            disabled={loading}
-            style={{ width: '100%', padding: '12px', marginTop: 8 }}
-          >
-            {loading ? 'Adding...' : '+ Add Company'}
-          </button>
-        </form>
+            <div className="form-group">
+              <label>City</label>
+              <input className="form-control" name="city" value={form.city} onChange={handleChange} placeholder="Enter city" />
+            </div>
+
+            <div className="form-group">
+              <label>Company Logo</label>
+              <input type="file" onChange={handleLogoChange} style={{ fontSize: 12, flex: 1 }} />
+            </div>
+
+            <button className="btn-primary" type="submit"
+              style={{ width: '100%', padding: '12px', marginTop: 8, borderRadius: 8 }}>
+              Save
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
