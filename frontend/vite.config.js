@@ -9,16 +9,17 @@ export default defineConfig({
     
     proxy: {
       '/api': {
-        target: 'https://review-rating-lcfe.onrender.com',
+        target: 'http://localhost:3000',
         changeOrigin: true,
         secure: true,
       },
 
       '/uploads': {
-        target: 'https://review-rating-lcfe.onrender.com',
+        target: 'http://localhost:3000',
         changeOrigin: true,
         secure: true,
       }
     }
   }
 })
+//'https://review-rating-lcfe.onrender.com'
